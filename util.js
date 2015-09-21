@@ -1,4 +1,4 @@
-var consumer_key = "25170-d2c6975cdc6144c3782c398a";
+var consumer_key = "<put your key here - you may obtain it at https://getpocket.com/developer/apps/>";
 
   function fetch(url,method,headers,body,callback,async,returnAsXML) {
 
