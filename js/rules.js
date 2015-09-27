@@ -1,14 +1,12 @@
-
-
 function storeRules(rules) {
     //localStorage["rules"]=JSON.stringify(rules);
-    chrome.storage.sync.set({"rules":rules});
+    chrome.storage.sync.set({"rules": rules});
 }
 
 function _getRules() {
     var rulesStr = localStorage["rules"];
 
-    if (!rulesStr) rulesStr="[]";
+    if (!rulesStr) rulesStr = "[]";
     return JSON.parse(rulesStr);
 }
 

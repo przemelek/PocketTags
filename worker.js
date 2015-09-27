@@ -1,10 +1,10 @@
 var consumer_key = "<put your key here - you may obtain it at https://getpocket.com/developer/apps/>";
 
-function fetch(url,method,headers,body,callback,async,returnAsXML) {
+function fetch(url, method, headers, body, callback, async, returnAsXML) {
 
     var xhr = new XMLHttpRequest();
     if (async) {
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
                     callback(xhr.responseText);
@@ -15,12 +15,12 @@ function fetch(url,method,headers,body,callback,async,returnAsXML) {
         }
     }
     xhr.open(method, url, async);
-    if (headers!==null) {
-        for (var i=0; i<headers.length; i++) {
-            xhr.setRequestHeader(headers[i].name,headers[i].value);
+    if (headers !== null) {
+        for (var i = 0; i < headers.length; i++) {
+            xhr.setRequestHeader(headers[i].name, headers[i].value);
         }
     }
-    if (body!==null) {
+    if (body !== null) {
         xhr.send(body);
     } else {
         xhr.send();
@@ -39,16 +39,22 @@ function fetch(url,method,headers,body,callback,async,returnAsXML) {
 // function fetch(url,method,headers,body,callback,async,returnAsXML)
 function retrieve(since, auth) {
     var url = "https://getpocket.com/v3/get";
-    var bodyObj = {"consumer_key":consumer_key,"access_token":auth,"contentType":"article","sort":"oldest","detailType":"complete"};
+    var bodyObj = {
+        "consumer_key": consumer_key,
+        "access_token": auth,
+        "contentType": "article",
+        "sort": "oldest",
+        "detailType": "complete"
+    };
 
     if (since) {
-        bodyObj.since=since;
+        bodyObj.since = since;
     }
     var body = JSON.stringify(bodyObj);
     var headers = [];
-    headers.push({"name":"Content-Type","value":"application/json; charset=UTF8"});
+    headers.push({"name": "Content-Type", "value": "application/json; charset=UTF8"});
     try {
-        var response = fetch(url,"POST",headers,body,null,false,false);
+        var response = fetch(url, "POST", headers, body, null, false, false);
         return response;
     } catch (e) {
         // OK, something went wrong, proceed
@@ -99,9 +105,9 @@ function getTagsFromRules(rules, article) {
 }
 
 function modify(rules, articles, tagToRemove, auth) {
-    var bodyObj = {"consumer_key":consumer_key,"access_token":auth};
-    bodyObj.actions=new Array();
-    for (var i=0; i<articles.length; i++) {
+    var bodyObj = {"consumer_key": consumer_key, "access_token": auth};
+    bodyObj.actions = new Array();
+    for (var i = 0; i < articles.length; i++) {
         var article = articles[i];
 
         var itemId = article.item_id;
@@ -121,15 +127,15 @@ function modify(rules, articles, tagToRemove, auth) {
             }
         }
     }
-    if (bodyObj.actions.length>0) {
+    if (bodyObj.actions.length > 0) {
         var body = JSON.stringify(bodyObj);
         var headers = [];
-        headers.push({"name":"Content-Type","value":"application/json; charset=UTF8"});
+        headers.push({"name": "Content-Type", "value": "application/json; charset=UTF8"});
         try {
-            var response = fetch(apiUrl,"POST",headers,body,null,false,false);
+            var response = fetch(apiUrl, "POST", headers, body, null, false, false);
             // OK, here we should pass value calculated from response....
             return true;
-        } catch(e) {
+        } catch (e) {
             return false;
         }
     }
@@ -137,7 +143,7 @@ function modify(rules, articles, tagToRemove, auth) {
 }
 
 function addTagsToAllNewPosts(tagToRemove, auth, rules, since) {
-    var list = JSON.parse(retrieve(since,auth));
+    var list = JSON.parse(retrieve(since, auth));
     var count = 0;
     var wordsCount = 0;
     var articles = [];
@@ -145,21 +151,21 @@ function addTagsToAllNewPosts(tagToRemove, auth, rules, since) {
     var needToUpdateSince = false;
     for (var key in list.list) {
         var article = list.list[key];
-        if (article.status!="0") {
-            console.log("skip "+article.item_id);
+        if (article.status != "0") {
+            console.log("skip " + article.item_id);
             continue;
         }
         count++;
-        wordsCount+=article.word_count*1;
+        wordsCount += article.word_count * 1;
         articles.push(article);
-        if (articles.length==1500) {
-            canUpdateSince&=modify(rules,articles,tagToRemove,auth);
+        if (articles.length == 1500) {
+            canUpdateSince &= modify(rules, articles, tagToRemove, auth);
             needToUpdateSince = true;
             articles = [];
         }
     }
-    if (articles.length!=0) {
-        canUpdateSince&=modify(rules,articles,tagToRemove,auth);
+    if (articles.length != 0) {
+        canUpdateSince &= modify(rules, articles, tagToRemove, auth);
         needToUpdateSince = true;
     }
 
@@ -167,20 +173,19 @@ function addTagsToAllNewPosts(tagToRemove, auth, rules, since) {
 
     if (needToUpdateSince && canUpdateSince) {
         // OK, may make problems...
-        var response = JSON.parse(retrieve(Math.floor(new Date().getTime()/1000),auth));
+        var response = JSON.parse(retrieve(Math.floor(new Date().getTime() / 1000), auth));
     }
 
-    console.log("count="+count);
-    console.log("wordsCount="+wordsCount);
+    console.log("count=" + count);
+    console.log("wordsCount=" + wordsCount);
     return response;
 }
 
 
-
-onmessage = function(msg) {
-    console.log("[Worker] got message "+msg.data);
+onmessage = function (msg) {
+    console.log("[Worker] got message " + msg.data);
     console.log(msg);
     var cmd = msg.data;
-    var response = addTagsToAllNewPosts(cmd.tagToRemove,cmd.auth, cmd.rules, cmd.since);
+    var response = addTagsToAllNewPosts(cmd.tagToRemove, cmd.auth, cmd.rules, cmd.since);
     postMessage(response)
 }
