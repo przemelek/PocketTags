@@ -18,27 +18,28 @@ app.factory("rulesService",["$q",function($q) {
 
 app.controller("TagsUIController", ["$scope", "$log", "rulesService", function($scope, $log, rulesService) {
   $scope.mode="list";
-  rulesService.get().then(function(rules) {
-    var rulesToDisplay = [];
-    for (var i=0; i<rules.length; i++) {
-      var ruleOrig = rules[i];
-      var rule = {tag:ruleOrig.tag};
-      if (ruleOrig.present) rule["present"]=ruleOrig.present;
-      if (ruleOrig.not_present) rule["not_present"]=ruleOrig.not_present;
-      if (ruleOrig.url_present) rule["url_present"]=ruleOrig.url_present;
-      rule.type=rule.url_present?"Link":"Title";
-      var present = rule.url_present?rule.url_present:rule.present;
-      rule.presentString = present?present.toString().replace("[","").replace("]",""):"";
-      var not_present = rule.url_present?"":rule.not_present;
-      rule.not_presentString = not_present?not_present.toString().replace("[","").replace("]",""):"";
-      rulesToDisplay.push(rule);
+    $scope.refreshRules = function() {
+        rulesService.get().then(function (rules) {
+            var rulesToDisplay = [];
+            for (var i = 0; i < rules.length; i++) {
+                var ruleOrig = rules[i];
+                var rule = {tag: ruleOrig.tag};
+                if (ruleOrig.present) rule["present"] = ruleOrig.present;
+                if (ruleOrig.not_present) rule["not_present"] = ruleOrig.not_present;
+                if (ruleOrig.url_present) rule["url_present"] = ruleOrig.url_present;
+                rule.type = rule.url_present ? "Link" : "Title";
+                var present = rule.url_present ? rule.url_present : rule.present;
+                rule.presentString = present ? present.toString().replace("[", "").replace("]", "") : "";
+                var not_present = rule.url_present ? "" : rule.not_present;
+                rule.not_presentString = not_present ? not_present.toString().replace("[", "").replace("]", "") : "";
+                rulesToDisplay.push(rule);
+            }
+            $scope.rules = rulesToDisplay;
+            $scope.types = [{label: "Link"}, {label: "Title"}];
+        });
     }
-    $scope.rules = rulesToDisplay;
-
-    $scope.types = [{label:"Link"},{label:"Title"}];
-  });
-
-  $scope.modify=function(idx) {
+    $scope.refreshRules();
+    $scope.modify=function(idx) {
     //var rules = getRules();
     rulesService.get().then(function(rules) {
       var rule = rules[idx];
@@ -60,7 +61,11 @@ app.controller("TagsUIController", ["$scope", "$log", "rulesService", function($
     var idx = $scope.ruleIdx;
     rules[idx]=newRule;
     rulesService.store(rules);
-    chrome.extension.sendRequest({"cmd":"modified","tag":tag},function(resp) { $scope.mode="list"});
+    chrome.extension.sendRequest({"cmd":"modified","tag":tag},function(resp) {
+      $scope.mode="list";
+    });
+      $scope.refreshRules();
+    $scope.mode="list";
   }
 
   $scope.add=function() {
@@ -90,8 +95,12 @@ app.controller("TagsUIController", ["$scope", "$log", "rulesService", function($
     rulesService.get().then(function(rules) {
       rules.push(rule);
       rulesService.store(rules);
-      chrome.extension.sendRequest({"cmd":"added"},function(resp) { $scope.mode="list"});
+      chrome.extension.sendRequest({"cmd":"added"},function(resp) {
+        $scope.mode="list";
+      });
     });
+      $scope.refreshRules();
+      $scope.mode="list";
   }
 
   $scope.deleteRule=function() {
@@ -106,8 +115,12 @@ app.controller("TagsUIController", ["$scope", "$log", "rulesService", function($
         }
       }
       rulesService.store(newRules);
-      chrome.extension.sendRequest({"cmd":"modified","tag":tag},function(resp) { $scope.mode="list"});
+      chrome.extension.sendRequest({"cmd":"modified","tag":tag},function(resp) {
+        $scope.mode="list";
+      });
     });
+      $scope.refreshRules();
+      $scope.mode="list";
   }
 
 }]);
